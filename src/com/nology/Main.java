@@ -4,26 +4,12 @@ import java.util.*;
 
 public class Main {
 
-    public static void setTimeout(Runnable runnable, int delay){
-        new Thread(() -> {
-            try {
-                Thread.sleep(delay);
-                runnable.run();
-            }
-            catch (Exception e){
-                System.err.println(e);
-            }
-        }).start();
-    }
-
-    public static void main(String[] args) {
-
-        String[] suits = {"H", "C", "D", "S"};
-        String[] values = {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"};
+    public static void main(String[] args) throws InterruptedException {
 
         boolean gameStarted = false;
 
         Scanner userInput = new Scanner(System.in);
+
         while(!gameStarted) {
             System.out.println("Are you ready to play? Y/N");
             String input = userInput.next();
@@ -32,92 +18,71 @@ public class Main {
             }
         }
 
-        List<String> deck = Deck.addCardsToDeck(suits,values);
-        setTimeout(() -> System.out.println("Shuffling deck..."), 100);
-        List<String> shuffledDeck = Deck.shuffleDeck(deck);
+        System.out.println("\nShuffling deck...");
+        List<String> shuffledDeck = Deck.createNewShuffledDeck();
 
         int currentCard = 4;
 
-        setTimeout(() -> System.out.println("You have been dealt " + shuffledDeck.get(0) + " and " + shuffledDeck.get(2)), 2000);
-        setTimeout(() -> System.out.println("House has been dealt " + shuffledDeck.get(1) + " and a face-down card"), 2500);
+        Player player = new Player(shuffledDeck.get(0),shuffledDeck.get(2));
+        Player house = new Player(shuffledDeck.get(1),shuffledDeck.get(3));
+        Thread.sleep(1000);
 
-        List<String> playerHand = new ArrayList<>();
-        playerHand.add(shuffledDeck.get(0));
-        playerHand.add(shuffledDeck.get(2));
+        System.out.println("You have been dealt " + player.getCard(0) + " and " + player.getCard(1));
+        Thread.sleep(500);
+        System.out.println("House has been dealt " + house.getCard(0) + " and a face-down card");
 
-        List<String> houseHand = new ArrayList<>();
-        houseHand.add(shuffledDeck.get(1));
-        houseHand.add(shuffledDeck.get(3));
-
-        int playerTotal = Deck.getValueOfCard(playerHand.get(0)) + Deck.getValueOfCard(playerHand.get(1));
-        int houseTotal = Deck.getValueOfCard(houseHand.get(0)) + Deck.getValueOfCard(houseHand.get(1));
-
-        int playerSplitValue1 = Deck.getValueOfCard(playerHand.get(0));
-        int playerSplitValue2 = Deck.getValueOfCard(playerHand.get(0));
-
-        boolean playerSplit = false;
-        boolean playerHandActive1 = false;
-        boolean playerHandActive2 = false;
-        boolean playerHandBust1 = false;
-        boolean playerHandBust2 = false;
         boolean gameActive = true;
-
-        boolean playerBust = false;
-        boolean houseBust = false;
 
         String playerTurn = "";
 
-        while(gameActive && !playerBust || (playerHandBust1 && playerHandBust2)) {
-            if(playerTotal > 21 && !playerSplit ) {
-                setTimeout(() -> System.out.println("You went bust!"), 1000);
-                playerBust = true;
+        while(gameActive) {
+            if(player.isBust()) {
+                Thread.sleep(500);
+                System.out.println("\nYou went bust!");
+                gameActive=false;
                 break;
-            } else if(playerSplit) {
-                if(playerSplitValue1 > 21) {
-                    playerHandBust1 = true;
-                } else if(playerSplitValue2 > 21) {
-                    playerHandBust2 = true;
-                }
             }
-            setTimeout(() -> System.out.println("Please choose hit (Hi), split (Sp), or stand (St)."), 3500);
+            Thread.sleep(750);
+            System.out.println("Please choose hit (Hi) or stand (St). \n");
             playerTurn = userInput.next();
             if(playerTurn.equals("Hi")) {
-                System.out.println("You drew " + shuffledDeck.get(currentCard));
-                playerTotal+= Deck.getValueOfCard(shuffledDeck.get(currentCard));
-                playerHand.add(shuffledDeck.get(currentCard));
+                System.out.println("\nYou drew " + shuffledDeck.get(currentCard));
+                player.addCardToHand(shuffledDeck.get(currentCard));
+                Thread.sleep(100);
+                System.out.println("Current hand " + player.getHand() + ". Current total: " + player.getTotal());
                 currentCard++;
-            } else if(playerTurn.equals("Sp") && !playerSplit && playerHand.get(0).charAt(0) == playerHand.get(1).charAt(0)) {
-                playerSplit = true;
-            } else if(playerTurn.equals("Sp") && playerSplit) {
-                System.out.println("You cannot split more than once.");
-            } else if(playerTurn.equals("Sp") && playerHand.get(0).charAt(0) != playerHand.get(1).charAt(0)) {
-                System.out.println("Your cards have to be the same value to split.");
             } else if(playerTurn.equals("St")) {
-                gameActive = false;
+                gameActive=false;
+                break;
+            }
+
+            if(player.getTotal() == 21) {
+                Thread.sleep(200);
+                System.out.println("\nYou have 21 in hand, automatically going to house turn.");
                 break;
             }
         }
 
-        if(!playerBust) {
-            System.out.println("House turn.");
-            System.out.println("House hand is " + houseHand.get(0) + " and " + houseHand.get(1));
-            while(houseTotal <= 17) {
+        if(!player.isBust()) {
+            System.out.println("\nHouse turn.\n");
+            Thread.sleep(500);
+            System.out.println("House hand is " + house.getHand().get(0) + " and " + house.getHand().get(1));
+            while(house.getTotal() < 17) {
+                Thread.sleep(1000);
                 System.out.println("House drew " + shuffledDeck.get(currentCard));
-                houseTotal += Deck.getValueOfCard(shuffledDeck.get(currentCard));
-                houseHand.add(shuffledDeck.get(currentCard));
+                house.addCardToHand(shuffledDeck.get(currentCard));
                 currentCard++;
-                if(houseTotal > 21) {
-                    System.out.println("House bust, you win!");
-                    houseBust = true;
+                if(house.isBust()) {
+                    System.out.println("\nHouse bust, you win!");
+                    break;
                 }
             }
 
-            if(!houseBust && playerTotal > houseTotal) {
-                System.out.println("You win!");
-            } else if(!houseBust && (houseTotal > playerTotal || houseTotal == playerTotal)) {
-                System.out.println("You lose!");
+            if(!house.isBust() && player.getTotal() > house.getTotal()) {
+                System.out.println("\nYou win!");
+            } else if(!house.isBust()){
+                System.out.println("\nYou lose!");
             }
         }
-
     }
 }

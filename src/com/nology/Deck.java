@@ -1,30 +1,35 @@
 package com.nology;
 
-import org.w3c.dom.ls.LSOutput;
-
 import java.util.*;
-import java.util.ArrayList;
 
 public class Deck {
 
-    public String[] suits = {"H", "C", "D", "S"};
-    public String[] values = {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"};
+    public static List<String> fullDeck = new ArrayList<>();
+    private static final String[] suits = {"H", "C", "D", "S"};
+    private static final String[] values = {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"};
 
-    static List<String> addCardsToDeck(String[] suits, String[] values) {
+    public Deck() {
+    }
 
-        List<String> deckOfCards = new ArrayList<>();
+    public static List<String> createNewShuffledDeck() {
+        List<String> newDeck = addCardsToDeck(suits, values);
+        fullDeck = shuffleDeck(newDeck);
+        return fullDeck;
+    }
+
+    public static List<String> addCardsToDeck(String[] suits, String[] values) {
 
         for(int i=0; i<52;i++) {
             int suitVal = i % 4;
             String suit = suits[suitVal];
             int valueVal = i / 4;
             String value = values[valueVal];
-            deckOfCards.add(suit+value);
+            fullDeck.add(suit+value);
         }
-        return deckOfCards;
+        return fullDeck;
     }
 
-    static int getValueOfCard(String card) {
+    public static int getValueOfCard(String card) {
         char value = card.charAt(1);
 
         if(value=='A') {
@@ -36,7 +41,7 @@ public class Deck {
         }
     }
 
-    static List<String> shuffleDeck(List<String> deck) {
+    public static List<String> shuffleDeck(List<String> deck) {
 
         Random r = new Random();
 
@@ -48,5 +53,9 @@ public class Deck {
             deck.set(j, obj);
         }
         return deck;
+    }
+
+    public static String getCard(int currentIndex) {
+        return fullDeck.get(currentIndex);
     }
 }
